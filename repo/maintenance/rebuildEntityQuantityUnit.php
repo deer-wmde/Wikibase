@@ -23,13 +23,13 @@ require_once __DIR__ . '/EntityQuantityUnitRebuilder.php';
 /**
  * @license GPL-2.0-or-later
  *
- * This script attemtps to rebuild the Quantity unit URI:s in statements from one hostname to another.
+ * This script attempts to rebuild the Quantity unit URI:s in statements from one hostname to another.
  *
  * You can run it using the --all parameter, this will loop through each property / item.
  * Without this parameter the script uses a rather slow SQL query to figure out which entities might need updating.
  *
  * Example:
- * WBS_DOMAIN=derphub.wbaas.localhost php extensions/Wikibase/repo/maintenance/wbstack/rebuildEntityQuantityUnit.php --from-host=wbaas.localhost --to-host=wbaas-2.localhost
+ * php extensions/Wikibase/repo/maintenance/rebuildEntityQuantityUnit.php --from-host=example.localhost --to-host=example.com
  */
 class RebuildEntityQuantityUnit extends Maintenance {
 
@@ -37,6 +37,20 @@ class RebuildEntityQuantityUnit extends Maintenance {
 		parent::__construct();
 
 		$this->addDescription( 'Rebuilds entity quantity unit uris' );
+
+		$this->addOption(
+			'from-host',
+			"Hostname to change from",
+			true,
+			true
+		);
+
+		$this->addOption(
+			'to-host',
+			"Hostname to change to",
+			true,
+			true
+		);
 
 		$this->addOption(
 			'all',
@@ -49,20 +63,6 @@ class RebuildEntityQuantityUnit extends Maintenance {
 			'from-id',
 			"First row (page id) to start updating from",
 			false,
-			true
-		);
-
-		$this->addOption(
-			'from-host',
-			"Hostname to change from (Default: 'wiki.opencura.com')",
-			true,
-			true
-		);
-
-		$this->addOption(
-			'to-host',
-			"Hostname to change to (Default: 'wikibase.cloud')",
-			true,
 			true
 		);
 
@@ -96,8 +96,8 @@ class RebuildEntityQuantityUnit extends Maintenance {
 			),
 			(int)$this->getOption( 'batch-size', 250 ),
 			(int)$this->getOption( 'sleep', 10 ),
-			(string)$this->getOption( 'from-host', 'wiki.opencura.com' ),
-			(string)$this->getOption( 'to-host', 'wikibase.cloud' ),
+			(string)$this->getOption( 'from-host'),
+			(string)$this->getOption( 'to-host'),
 			$this->getOption( 'all', false )
 		);
 
