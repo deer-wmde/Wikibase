@@ -37,14 +37,6 @@ class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase {
 		];
 	}
 
-	// test if maintenance script fails without required arguments
-	public function testException()
-	{
-		$this->expectException(
-			$this->maintenance->execute()
-		);
-	}
-
 	/**
 	 * @dataProvider hostProvider
 	 */
