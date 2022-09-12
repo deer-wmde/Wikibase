@@ -100,7 +100,7 @@ class EntityQuantityUnitRebuilder {
 				$entityIds = $this->idPager->fetchIds( $this->batchSize );
 			} else {
 				$result = $db->query(
-					' SELECT distinct(page_title) from' . $db->tableName( 'page' ) . ' as p '
+					' SELECT distinct(page_title) from ' . $db->tableName( 'page' ) . ' as p '
 					. ' inner join ' . $db->tableName( 'pagelinks' ) . ' as pl on p.page_id = pl.pl_from'
 					. ' inner join ' .$db->tableName( 'wb_property_info' ). ' as pi on pl.pl_title = CONCAT(\'P\', pi.pi_property_id)'
 					. ' where ( p.page_title like \'Q%\' OR p.page_title like \'P%\' ) and pi.pi_info = \'{"type":"quantity"}\''
