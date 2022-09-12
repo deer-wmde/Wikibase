@@ -119,7 +119,7 @@ class EntityQuantityUnitRebuilder {
 
 			$numEntities = count($entityIds);
 
-			if ( !$entityIds ) {
+			if ( $numEntities == 0 ) {
 				break;
 			}
 
