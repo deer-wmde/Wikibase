@@ -11,6 +11,9 @@ use Wikibase\DataModel\Entity\Property;
 use Wikibase\DataModel\Snak\PropertyValueSnak;
 use Wikibase\DataModel\Statement\Statement;
 use Wikibase\DataModel\Statement\StatementList;
+use Wikibase\DataModel\Term\Fingerprint;
+use Wikibase\DataModel\Term\TermList;
+use Wikibase\DataModel\Term\Term;
 use Wikibase\Repo\Maintenance\RebuildEntityQuantityUnit;
 use Wikibase\Repo\WikibaseRepo;
 
@@ -52,7 +55,9 @@ class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase {
 
 		$this->store = WikibaseRepo::getEntityStore();
 
-		// TODO! $this->tablesUsed[] = '';
+		// TODO are these tables the right ones?
+		$this->tablesUsed[] = 'page';
+		$this->tablesUsed[] = 'wb_items_per_site';
 
 		if ( !$this->itemIds ) {
 			$this->itemIds = $this->createItems();
@@ -64,7 +69,8 @@ class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase {
 	 */
 	private function createItems(): array {
 		$testUser = $this->getTestUser()->getUser();
-		$quantityUnitProperty = new Property($id, $fingerprint, 'PT:quantity');
+		$quantityUnitProperty = new Property(null, new Fingerprint( new TermList( [ new Term( 'en', 'test') ] ) ), 'quantity');
+		$this->store->saveEntity($quantityUnitProperty, 'testing', $testUser, EDIT_NEW);
 
 		// case 1: host matches - needs update
 		$itemHostMatches = new Item();
@@ -80,19 +86,23 @@ class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase {
 		$this->store->saveEntity( $itemHostMatches, 'testing', $testUser, EDIT_NEW );
 
 		// case 2: host doesn't match - mustn't be touched
+		/*
 		$itemHostDoesNotMatch = new Item();
 		// TODO add Statements
 		$this->store->saveEntity( $itemHostDoesNotMatch, 'testing', $testUser, EDIT_NEW );
+		//*/
 
 		// case 3: host is already correct - no update needed
+		/*
 		$itemHostMatches = new Item();
 		// TODO add Statements
 		$this->store->saveEntity( $itemHostMatches, 'testing', $testUser, EDIT_NEW );
+		//*/
 
 		return [
 			$itemHostMatches->getId(),
-			$itemHostDoesNotMatch->getId(),
-			$itemHostMatches->getId()
+//			$itemHostDoesNotMatch->getId(),
+//			$itemHostMatches->getId()
 		];
 	}
 
@@ -124,6 +134,8 @@ class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase {
 		$this->maintenance->loadWithArgv( $argv );
 		$this->maintenance->execute();
 
-
+		// TODO assert expected quantity unit values in item statements
+//		$itemHostMatches = $this->store->
+//		$this->assertEquals('', );
 	}
 }
