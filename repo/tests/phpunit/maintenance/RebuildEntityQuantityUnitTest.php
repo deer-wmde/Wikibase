@@ -2,9 +2,17 @@
 
 namespace Wikibase\Repo\Tests\Maintenance;
 
+use DataValues\QuantityValue;
+use DataValues\UnboundedQuantityValue;
 use MediaWiki\Tests\Maintenance\MaintenanceBaseTestCase;
+use Wikibase\DataModel\Entity\Item;
+use Wikibase\DataModel\Entity\ItemId;
+use Wikibase\DataModel\Entity\Property;
+use Wikibase\DataModel\Snak\PropertyValueSnak;
+use Wikibase\DataModel\Statement\Statement;
+use Wikibase\DataModel\Statement\StatementList;
 use Wikibase\Repo\Maintenance\RebuildEntityQuantityUnit;
-use Wikibase\Repo\Maintenance\EntityQuantityUnitRebuilder;
+use Wikibase\Repo\WikibaseRepo;
 
 // files in maintenance/ are not autoloaded to avoid accidental usage, so load explicitly
 require_once __DIR__ . '/../../../maintenance/rebuildEntityQuantityUnit.php';
@@ -19,14 +27,78 @@ require_once __DIR__ . '/../../../maintenance/rebuildEntityQuantityUnit.php';
  * @author Deniz Erdogan < deniz.erdogan@wikimedia.de >
  */
 class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase {
+	/**
+	 * @var ItemId[]
+	 */
+	private $itemIds = [];
+
+	/**
+	 * @var WikibaseRepo
+	 */
+	private $store;
+
+	/**
+	 * @return string
+	 */
 	protected function getMaintenanceClass() {
 		return RebuildEntityQuantityUnit::class;
 	}
 
+	/**
+	 * @return void
+	 */
 	protected function setUp(): void {
 		parent::setUp();
+
+		$this->store = WikibaseRepo::getEntityStore();
+
+		// TODO! $this->tablesUsed[] = '';
+
+		if ( !$this->itemIds ) {
+			$this->itemIds = $this->createItems();
+		}
 	}
 
+	/**
+	 * @return ItemId[]
+	 */
+	private function createItems(): array {
+		$testUser = $this->getTestUser()->getUser();
+		$quantityUnitProperty = new Property($id, $fingerprint, 'PT:quantity');
+
+		// case 1: host matches - needs update
+		$itemHostMatches = new Item();
+
+		$value = UnboundedQuantityValue::newFromNumber(100, 'foo');
+		$snak = new PropertyValueSnak( $quantityUnitProperty->getId(), $value);
+		$itemHostMatches->setStatements(
+			new StatementList(
+				new Statement($snak)
+			)
+		);
+
+		$this->store->saveEntity( $itemHostMatches, 'testing', $testUser, EDIT_NEW );
+
+		// case 2: host doesn't match - mustn't be touched
+		$itemHostDoesNotMatch = new Item();
+		// TODO add Statements
+		$this->store->saveEntity( $itemHostDoesNotMatch, 'testing', $testUser, EDIT_NEW );
+
+		// case 3: host is already correct - no update needed
+		$itemHostMatches = new Item();
+		// TODO add Statements
+		$this->store->saveEntity( $itemHostMatches, 'testing', $testUser, EDIT_NEW );
+
+		return [
+			$itemHostMatches->getId(),
+			$itemHostDoesNotMatch->getId(),
+			$itemHostMatches->getId()
+		];
+	}
+
+	/**
+	 * @return string[][]
+	 */
 	public function hostProvider(): array
 	{
 		return [
@@ -51,5 +123,7 @@ class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase {
 
 		$this->maintenance->loadWithArgv( $argv );
 		$this->maintenance->execute();
+
+
 	}
 }
