@@ -22,7 +22,6 @@ use Wikibase\DataModel\Entity\NumericPropertyId;
  * @license GPL-2.0-or-later
  */
 class EntityQuantityUnitRebuilder {
-
 	/** @var SeekableEntityIdPager */
 	private $idPager;
 	/** @var MessageReporter */
@@ -46,9 +45,6 @@ class EntityQuantityUnitRebuilder {
 	private $entityStore;
 	private $performer;
 
-	/** @var bool */
-	private $all;
-
 	/**
 	 * @param PropertyTermStoreWriter $propertyTermStoreWriter
 	 * @param SeekableEntityIdPager $idPager
@@ -69,8 +65,7 @@ class EntityQuantityUnitRebuilder {
 		int                   $batchSize,
 		int                   $batchSpacingInSeconds,
 		string                $valueFrom,
-		string                $valueTo,
-		bool                  $all
+		string                $valueTo
 	) {
 		$this->idPager = $idPager;
 		$this->progressReporter = $progressReporter;
@@ -84,7 +79,6 @@ class EntityQuantityUnitRebuilder {
 		$this->valueTo = $valueTo;
 		$this->entityStore = WikibaseRepo::getEntityStore();
 		$this->performer = \User::newSystemUser( \User::MAINTENANCE_SCRIPT_USER, [ 'steal' => true ] );
-		$this->loopThroughAll = $all;
 	}
 
 	public function rebuild() {

@@ -98,20 +98,7 @@ class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase {
 
 		$this->store->saveEntity( $itemValueMatches, 'testing', $testUser, EDIT_NEW );
 
-		// case 2: value doesn't match - mustn't be touched
-		$itemValueDoesNotMatch = new Item();
-
-		$value = QuantityValue::newFromNumber(100, 'http://wrong.wikibase/entity/Q1234');
-		$snak = new PropertyValueSnak( $this->quantityUnitProperty->getId(), $value);
-		$itemValueDoesNotMatch->setStatements(
-			new StatementList(
-				new Statement($snak)
-			)
-		);
-
-		$this->store->saveEntity( $itemValueDoesNotMatch, 'testing', $testUser, EDIT_NEW );
-
-		// case 3: value is already correct - no update needed
+		// case 2: value is already correct - no update needed
 		$itemValueAlreadyCorrect = new Item();
 
 		$value = QuantityValue::newFromNumber(100, 'https://new.wikibase/entity/'.$itemUnit->getId()->getSerialization());
@@ -124,10 +111,23 @@ class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase {
 
 		$this->store->saveEntity( $itemValueAlreadyCorrect, 'testing', $testUser, EDIT_NEW );
 
+		// case 3: value doesn't match - mustn't be touched
+		$itemValueDoesNotMatch = new Item();
+
+		$value = QuantityValue::newFromNumber(100, 'http://wrong.wikibase/entity/Q1234');
+		$snak = new PropertyValueSnak( $this->quantityUnitProperty->getId(), $value);
+		$itemValueDoesNotMatch->setStatements(
+			new StatementList(
+				new Statement($snak)
+			)
+		);
+
+		$this->store->saveEntity( $itemValueDoesNotMatch, 'testing', $testUser, EDIT_NEW );
+
 		return [
 			$itemValueMatches->getId(),
+			$itemValueAlreadyCorrect->getId(),
 			$itemValueDoesNotMatch->getId(),
-			$itemValueAlreadyCorrect->getId()
 		];
 	}
 
@@ -151,8 +151,8 @@ class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase {
 		);
 
 		$itemValueMatches = $entityLookup->getItemForId($this->itemIds[0]);
-		$itemValueDoesNotMatch = $entityLookup->getItemForId($this->itemIds[1]);
-		$itemValueAlreadyCorrect = $entityLookup->getItemForId($this->itemIds[2]);
+		$itemValueAlreadyCorrect = $entityLookup->getItemForId($this->itemIds[1]);
+		$itemValueDoesNotMatch = $entityLookup->getItemForId($this->itemIds[2]);
 
 		$itemValueMatchesUnit = $itemValueMatches->getStatements()->getByPropertyId($this->quantityUnitProperty->getId())
 			->getMainSnaks()[0]->getDataValue()->getValue()->getUnit();
@@ -164,17 +164,17 @@ class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase {
 			->getMainSnaks()[0]->getDataValue()->getValue()->getUnit();
 
 		$this->assertEquals(
-			'https://new.wikibase/entity/'.$itemValueMatches->getId()->getSerialization(),
+			$toValue.'/entity/'.$itemValueMatches->getId()->getSerialization(),
 			$itemValueMatchesUnit
-		);
-
-		$this->assertEquals(
-			'http://wrong.wikibase/entity/Q1234',
-			$itemValueDoesNotMatchUnit
 		);
 
 		$this->assertEquals(
 			'https://new.wikibase/entity/'.$itemValueAlreadyCorrect->getId()->getSerialization(),
 			$itemValueAlreadyCorrectUnit);
+
+		$this->assertEquals(
+			'http://wrong.wikibase/entity/Q1234',
+			$itemValueDoesNotMatchUnit
+		);
 	}
 }

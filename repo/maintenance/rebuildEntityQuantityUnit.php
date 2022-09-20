@@ -53,20 +53,6 @@ class RebuildEntityQuantityUnit extends Maintenance {
 		);
 
 		$this->addOption(
-			'all',
-			"Loop through every item / property",
-			false,
-			true
-		);
-
-		$this->addOption(
-			'from-id',
-			"First row (page id) to start updating from",
-			false,
-			true
-		);
-
-		$this->addOption(
 			'batch-size',
 			"Number of rows to update per batch (Default: 250)",
 			false,
@@ -82,7 +68,6 @@ class RebuildEntityQuantityUnit extends Maintenance {
 	}
 
 	public function execute() {
-
 		$rebuilder = new EntityQuantityUnitRebuilder(
 			$this->newEntityIdPager(),
 			$this->getReporter(),
@@ -97,8 +82,7 @@ class RebuildEntityQuantityUnit extends Maintenance {
 			(int)$this->getOption( 'batch-size', 250 ),
 			(int)$this->getOption( 'sleep', 10 ),
 			(string)$this->getOption( 'from-value'),
-			(string)$this->getOption( 'to-value'),
-			$this->getOption( 'all', false )
+			(string)$this->getOption( 'to-value')
 		);
 
 		$rebuilder->rebuild();
@@ -114,16 +98,6 @@ class RebuildEntityQuantityUnit extends Maintenance {
 		);
 
 		$pager = $sqlEntityIdPagerFactory->newSqlEntityIdPager( [ 'property', 'item' ] );
-
-		$fromId = $this->getOption( 'from-id' );
-
-		if ( $fromId !== null ) {
-			if( $this->getOption( 'all') !== false ) {
-				$this->fatalError( "--from-id only works with --all=true option" );
-			}
-
-			$pager->setPosition( (int)$fromId - 1 );
-		}
 
 		return $pager;
 	}
