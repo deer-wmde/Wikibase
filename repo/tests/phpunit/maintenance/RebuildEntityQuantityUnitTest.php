@@ -73,21 +73,6 @@ class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase
 	}
 
 	/**
-	 * @param LegacyAdapterItemLookup $entityLookup
-	 * @param ItemId $itemId
-	 * @return string
-	 */
-	public function getItemUnitValue(LegacyAdapterItemLookup $entityLookup, ItemId $itemId): string
-	{
-		$item = $entityLookup->getItemForId($itemId);
-		$itemStatements = $item->getStatements()->getByPropertyId($this->quantityUnitProperty->getId());
-		$mainSnak = $itemStatements->getMainSnaks()[0];
-		$unitValue = $mainSnak->getDataValue()->getValue()->getUnit();
-
-		return $unitValue;
-	}
-
-	/**
 	 * @param $unitValue
 	 * @return ItemId|null
 	 * @throws PermissionsError
@@ -108,6 +93,21 @@ class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase
 		$this->store->saveEntity($item, 'testing', $this->user, EDIT_NEW);
 
 		return $item->getId();
+	}
+
+	/**
+	 * @param LegacyAdapterItemLookup $entityLookup
+	 * @param ItemId $itemId
+	 * @return string
+	 */
+	public function getItemUnitValueFromItem(LegacyAdapterItemLookup $entityLookup, ItemId $itemId): string
+	{
+		$item = $entityLookup->getItemForId($itemId);
+		$itemStatements = $item->getStatements()->getByPropertyId($this->quantityUnitProperty->getId());
+		$mainSnak = $itemStatements->getMainSnaks()[0];
+		$unitValue = $mainSnak->getDataValue()->getValue()->getUnit();
+
+		return $unitValue;
 	}
 
 	protected function setUp(): void
@@ -162,19 +162,19 @@ class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase
 		// test if value changed from 'http://old.wikibase/entity/Q1' to 'https://new.wikibase/entity/Q1'
 		$this->assertEquals(
 			$toValue . '/entity/' . $this->unitItemId,
-			$this->getItemUnitValue($entityLookup, $this->itemIds['matches'])
+			$this->getItemUnitValueFromItem($entityLookup, $this->itemIds['matches'])
 		);
 
 		// test if value did NOT change from 'https://new.wikibase/entity/Q1'
 		$this->assertEquals(
 			$toValue . '/entity/' . $this->unitItemId,
-			$this->getItemUnitValue($entityLookup, $this->itemIds['alreadyCorrect'])
+			$this->getItemUnitValueFromItem($entityLookup, $this->itemIds['alreadyCorrect'])
 		);
 
 		// test if value did NOT change from 'http://unrelated.wikibase/entity/Q1234'
 		$this->assertEquals(
 			'http://unrelated.wikibase/entity/Q1234',
-			$this->getItemUnitValue($entityLookup, $this->itemIds['doesNotMatch'])
+			$this->getItemUnitValueFromItem($entityLookup, $this->itemIds['doesNotMatch'])
 		);
 	}
 }
