@@ -3,10 +3,9 @@
 namespace Wikibase\Repo\Maintenance;
 
 use DataValues\UnboundedQuantityValue;
-use Exception;
 use Onoi\MessageReporter\MessageReporter;
 use Wikibase\DataModel\Entity\ItemId;
-use Wikibase\DataModel\Entity\Property;
+use Wikibase\Lib\Store\EntityStore;
 use Wikibase\DataModel\Services\EntityId\SeekableEntityIdPager;
 use Wikibase\DataModel\Services\Lookup\ItemLookup;
 use Wikibase\DataModel\Services\Lookup\PropertyLookup;
@@ -42,7 +41,9 @@ class EntityQuantityUnitRebuilder {
 	private $valueFrom;
 	/** @var string */
 	private $valueTo;
+	/** @var EntityStore */
 	private $entityStore;
+	/** @var \User  */
 	private $performer;
 
 	/**
