@@ -141,16 +141,22 @@ class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase {
 			WikibaseRepo::getStore()->getEntityLookup( Store::LOOKUP_CACHING_DISABLED )
 		);
 
+		// this is most likely 'Q1' but let's look it up
+		$serializedItemUnitId = $this->itemUnit->getId()->getSerialization();
+
+		// test if value changed from 'http://old.wikibase/entity/Q1' to 'https://new.wikibase/entity/Q1'
 		$this->assertEquals(
-			$toValue.'/entity/'.$this->itemUnit->getId()->getSerialization(),
+			$toValue.'/entity/'.$serializedItemUnitId,
 			$this->getItemUnitValue($entityLookup, $this->itemIds['matches'])
 		);
 
+		// test if value did NOT change from 'https://new.wikibase/entity/Q1'
 		$this->assertEquals(
-			$toValue.'/entity/'.$this->itemUnit->getId()->getSerialization(),
+			$toValue.'/entity/'.$serializedItemUnitId,
 			$this->getItemUnitValue($entityLookup, $this->itemIds['alreadyCorrect'])
 		);
 
+		// test if value did NOT change from 'http://unrelated.wikibase/entity/Q1234'
 		$this->assertEquals(
 			'http://unrelated.wikibase/entity/Q1234',
 			$this->getItemUnitValue($entityLookup, $this->itemIds['doesNotMatch'])
