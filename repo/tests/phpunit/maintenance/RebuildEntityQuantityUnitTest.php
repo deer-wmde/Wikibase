@@ -37,9 +37,7 @@ require_once __DIR__ . '/../../../maintenance/rebuildEntityQuantityUnit.php';
 class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase {
 	use WikibaseTablesUsed;
 
-	private $valueMatchesItemId;
-	private $valueAlreadyCorrectItemId;
-	private $valueDoesNotMatchItemId;
+	private $itemIds;
 
 	/**
 	 * @var EntityStore
@@ -110,9 +108,15 @@ class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase {
 		$this->itemUnit = new Item();
 		$this->store->saveEntity($this->itemUnit, 'testing', $this->user, EDIT_NEW);
 
-		$this->valueMatchesItemId = $this->createItem('http://old.wikibase/entity/'. $this->itemUnit->getId()->getSerialization());
-		$this->valueAlreadyCorrectItemId = $this->createItem('https://new.wikibase/entity/'. $this->itemUnit->getId()->getSerialization());
-		$this->valueDoesNotMatchItemId = $this->createItem('http://unrelated.wikibase/entity/Q1234');
+		$unitValues = [
+			'matches'		 => 'http://old.wikibase/entity/' . $this->itemUnit->getId()->getSerialization(),
+			'alreadyCorrect' => 'https://new.wikibase/entity/' . $this->itemUnit->getId()->getSerialization(),
+			'doesNotMatch' 	 => 'http://unrelated.wikibase/entity/Q1234',
+		];
+
+		foreach ($unitValues as $key => $unitValue) {
+			$this->itemIds[$key] = $this->createItem($unitValue);
+		}
 	}
 
 	public function testExecute() {
@@ -136,17 +140,17 @@ class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase {
 
 		$this->assertEquals(
 			$toValue.'/entity/'.$this->itemUnit->getId()->getSerialization(),
-			$this->getItemUnitValue($entityLookup, $this->valueMatchesItemId)
+			$this->getItemUnitValue($entityLookup, $this->itemIds['matches'])
 		);
 
 		$this->assertEquals(
 			$toValue.'/entity/'.$this->itemUnit->getId()->getSerialization(),
-			$this->getItemUnitValue($entityLookup, $this->valueAlreadyCorrectItemId)
+			$this->getItemUnitValue($entityLookup, $this->itemIds['alreadyCorrect'])
 		);
 
 		$this->assertEquals(
 			'http://unrelated.wikibase/entity/Q1234',
-			$this->getItemUnitValue($entityLookup, $this->valueDoesNotMatchItemId)
+			$this->getItemUnitValue($entityLookup, $this->itemIds['doesNotMatch'])
 		);
 	}
 }
