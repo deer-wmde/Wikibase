@@ -29,25 +29,25 @@ require_once __DIR__ . '/EntityQuantityUnitRebuilder.php';
  * Without this parameter the script uses a rather slow SQL query to figure out which entities might need updating.
  *
  * Example:
- * php extensions/Wikibase/repo/maintenance/rebuildEntityQuantityUnit.php --from-host=example.localhost --to-host=example.com
+ * php extensions/Wikibase/repo/maintenance/rebuildEntityQuantityUnit.php --from-value=example.localhost --to-value=example.com
  */
 class RebuildEntityQuantityUnit extends Maintenance {
 
 	public function __construct() {
 		parent::__construct();
 
-		$this->addDescription( 'Rebuilds entity quantity unit uris' );
+		$this->addDescription( 'Rebuilds entity quantity unit values' );
 
 		$this->addOption(
-			'from-host',
-			"Hostname to change from",
+			'from-value',
+			"Value to change from",
 			true,
 			true
 		);
 
 		$this->addOption(
-			'to-host',
-			"Hostname to change to",
+			'to-value',
+			"Value to change to",
 			true,
 			true
 		);
@@ -96,8 +96,8 @@ class RebuildEntityQuantityUnit extends Maintenance {
 			),
 			(int)$this->getOption( 'batch-size', 250 ),
 			(int)$this->getOption( 'sleep', 10 ),
-			(string)$this->getOption( 'from-host'),
-			(string)$this->getOption( 'to-host'),
+			(string)$this->getOption( 'from-value'),
+			(string)$this->getOption( 'to-value'),
 			$this->getOption( 'all', false )
 		);
 
@@ -143,7 +143,6 @@ class RebuildEntityQuantityUnit extends Maintenance {
 			}
 		);
 	}
-
 }
 
 $maintClass = RebuildEntityQuantityUnit::class;
