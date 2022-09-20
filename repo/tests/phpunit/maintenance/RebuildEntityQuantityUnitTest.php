@@ -152,27 +152,23 @@ class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase {
 		);
 
 		$itemValueMatches = $entityLookup->getItemForId($this->itemIds[0]);
-		$itemValueAlreadyCorrect = $entityLookup->getItemForId($this->itemIds[1]);
-		$itemValueDoesNotMatch = $entityLookup->getItemForId($this->itemIds[2]);
-
 		$itemValueMatchesUnit = $itemValueMatches->getStatements()->getByPropertyId($this->quantityUnitProperty->getId())
 			->getMainSnaks()[0]->getDataValue()->getValue()->getUnit();
-
-		$itemValueDoesNotMatchUnit = $itemValueDoesNotMatch->getStatements()->getByPropertyId($this->quantityUnitProperty->getId())
-			->getMainSnaks()[0]->getDataValue()->getValue()->getUnit();
-
-		$itemValueAlreadyCorrectUnit = $itemValueAlreadyCorrect->getStatements()->getByPropertyId($this->quantityUnitProperty->getId())
-			->getMainSnaks()[0]->getDataValue()->getValue()->getUnit();
-
 		$this->assertEquals(
 			$toValue.'/entity/'.$itemValueMatches->getId()->getSerialization(),
 			$itemValueMatchesUnit
 		);
 
+		$itemValueAlreadyCorrect = $entityLookup->getItemForId($this->itemIds[1]);
+		$itemValueAlreadyCorrectUnit = $itemValueAlreadyCorrect->getStatements()->getByPropertyId($this->quantityUnitProperty->getId())
+			->getMainSnaks()[0]->getDataValue()->getValue()->getUnit();
 		$this->assertEquals(
 			$toValue.'/entity/'.$itemValueAlreadyCorrect->getId()->getSerialization(),
 			$itemValueAlreadyCorrectUnit);
 
+		$itemValueDoesNotMatch = $entityLookup->getItemForId($this->itemIds[2]);
+		$itemValueDoesNotMatchUnit = $itemValueDoesNotMatch->getStatements()->getByPropertyId($this->quantityUnitProperty->getId())
+			->getMainSnaks()[0]->getDataValue()->getValue()->getUnit();
 		$this->assertEquals(
 			'http://unrelated.wikibase/entity/Q1234',
 			$itemValueDoesNotMatchUnit
