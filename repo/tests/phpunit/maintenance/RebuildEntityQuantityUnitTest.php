@@ -42,6 +42,10 @@ class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase {
 	 */
 	private $itemIds = [];
 
+	private $valueMatchesItemId;
+	private $valueAlreadyCorrectItemId;
+	private $valueDoesNotMatchItemId;
+
 	/**
 	 * @var EntityStore
 	 */
@@ -51,6 +55,22 @@ class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase {
 	 * @var Property
 	 */
 	private $quantityUnitProperty;
+	private $user;
+
+	/**
+	 * @param LegacyAdapterItemLookup $entityLookup
+	 * @param $itemId
+	 * @return void
+	 */
+	public function getItemUnitValue(LegacyAdapterItemLookup $entityLookup, $itemId): string
+	{
+		$item = $entityLookup->getItemForId($itemId);
+		$itemStatements = $item->getStatements()->getByPropertyId($this->quantityUnitProperty->getId());
+		$mainSnak = $itemStatements->getMainSnaks()[0];
+		$unitValue = $mainSnak->getDataValue()->getValue()->getUnit();
+
+		return $unitValue;
+	}
 
 	/**
 	 * @return string
@@ -60,76 +80,46 @@ class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase {
 	}
 
 	/**
+	 * @param $unitValue
+	 * @return ItemId|null
+	 * @throws \PermissionsError
+	 * @throws \Wikibase\Lib\Store\StorageException
+	 */
+	private function createItem($unitValue) {
+		$item = new Item();
+
+		$value = QuantityValue::newFromNumber(100, $unitValue);
+		$snak = new PropertyValueSnak( $this->quantityUnitProperty->getId(), $value);
+		$item->setStatements(
+			new StatementList(
+				new Statement($snak)
+			)
+		);
+
+		$this->store->saveEntity( $item, 'testing', $this->user, EDIT_NEW );
+
+		return $item->getId();
+	}
+
+	/**
 	 * @return void
 	 */
 	protected function setUp(): void {
 		parent::setUp();
 
-		$this->store = WikibaseRepo::getEntityStore();
-
 		$this->markTablesUsedForEntityEditing();
-
-		if ( !$this->itemIds ) {
-			$this->itemIds = $this->createItems();
-		}
-	}
-
-	/**
-	 * @return ItemId[]
-	 */
-	private function createItems(): array {
-		$testUser = $this->getTestUser()->getUser();
+		$this->store = WikibaseRepo::getEntityStore();
+		$this->user = $this->getTestUser()->getUser();
 
 		$this->quantityUnitProperty = new Property(null, new Fingerprint(new TermList([new Term('en', 'weight')])), 'quantity');
-		$this->store->saveEntity($this->quantityUnitProperty, 'testing', $testUser, EDIT_NEW);
+		$this->store->saveEntity($this->quantityUnitProperty, 'testing', $this->user, EDIT_NEW);
 
 		$itemUnit = new Item();
-		$this->store->saveEntity($itemUnit, 'testing', $testUser, EDIT_NEW);
+		$this->store->saveEntity($itemUnit, 'testing', $this->user, EDIT_NEW);
 
-		// case 1: value matches - needs update
-		$itemValueMatches = new Item();
-
-		$value = QuantityValue::newFromNumber(100, 'http://old.wikibase/entity/'.$itemUnit->getId()->getSerialization());
-		$snak = new PropertyValueSnak( $this->quantityUnitProperty->getId(), $value);
-		$itemValueMatches->setStatements(
-			new StatementList(
-				new Statement($snak)
-			)
-		);
-
-		$this->store->saveEntity( $itemValueMatches, 'testing', $testUser, EDIT_NEW );
-
-		// case 2: value is already correct - no update needed
-		$itemValueAlreadyCorrect = new Item();
-
-		$value = QuantityValue::newFromNumber(100, 'https://new.wikibase/entity/'.$itemUnit->getId()->getSerialization());
-		$snak = new PropertyValueSnak( $this->quantityUnitProperty->getId(), $value);
-		$itemValueAlreadyCorrect->setStatements(
-			new StatementList(
-				new Statement($snak)
-			)
-		);
-
-		$this->store->saveEntity( $itemValueAlreadyCorrect, 'testing', $testUser, EDIT_NEW );
-
-		// case 3: value doesn't match - mustn't be touched
-		$itemValueDoesNotMatch = new Item();
-
-		$value = QuantityValue::newFromNumber(100, 'http://wrong.wikibase/entity/Q1234');
-		$snak = new PropertyValueSnak( $this->quantityUnitProperty->getId(), $value);
-		$itemValueDoesNotMatch->setStatements(
-			new StatementList(
-				new Statement($snak)
-			)
-		);
-
-		$this->store->saveEntity( $itemValueDoesNotMatch, 'testing', $testUser, EDIT_NEW );
-
-		return [
-			$itemValueMatches->getId(),
-			$itemValueAlreadyCorrect->getId(),
-			$itemValueDoesNotMatch->getId(),
-		];
+		$this->valueMatchesItemId = $this->createItem('http://old.wikibase/entity/'.$itemUnit->getId()->getSerialization());
+		$this->valueAlreadyCorrectItemId = $this->createItem('https://new.wikibase/entity/'.$itemUnit->getId()->getSerialization());
+		$this->valueDoesNotMatchItemId = $this->createItem('http://wrong.wikibase/entity/Q1234');
 	}
 
 	public function testExecute() {
@@ -151,27 +141,17 @@ class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase {
 			WikibaseRepo::getStore()->getEntityLookup( Store::LOOKUP_CACHING_DISABLED )
 		);
 
-		$itemValueMatches = $entityLookup->getItemForId($this->itemIds[0]);
-		$itemValueMatchesUnit = $itemValueMatches->getStatements()->getByPropertyId($this->quantityUnitProperty->getId())
-			->getMainSnaks()[0]->getDataValue()->getValue()->getUnit();
 		$this->assertEquals(
-			$toValue.'/entity/'.$itemValueMatches->getId()->getSerialization(),
-			$itemValueMatchesUnit
-		);
+			$toValue.'/entity/'.$this->valueMatchesItemId,
+			$this->getItemUnitValue($entityLookup, $this->valueMatchesItemId));
 
-		$itemValueAlreadyCorrect = $entityLookup->getItemForId($this->itemIds[1]);
-		$itemValueAlreadyCorrectUnit = $itemValueAlreadyCorrect->getStatements()->getByPropertyId($this->quantityUnitProperty->getId())
-			->getMainSnaks()[0]->getDataValue()->getValue()->getUnit();
 		$this->assertEquals(
-			$toValue.'/entity/'.$itemValueAlreadyCorrect->getId()->getSerialization(),
-			$itemValueAlreadyCorrectUnit);
+			$toValue.'/entity/'.$this->valueAlreadyCorrectItemId,
+			$this->getItemUnitValue($entityLookup, $this->valueAlreadyCorrectItemId));
 
-		$itemValueDoesNotMatch = $entityLookup->getItemForId($this->itemIds[2]);
-		$itemValueDoesNotMatchUnit = $itemValueDoesNotMatch->getStatements()->getByPropertyId($this->quantityUnitProperty->getId())
-			->getMainSnaks()[0]->getDataValue()->getValue()->getUnit();
 		$this->assertEquals(
 			'http://unrelated.wikibase/entity/Q1234',
-			$itemValueDoesNotMatchUnit
+			$this->getItemUnitValue($entityLookup, $this->valueDoesNotMatchItemId)
 		);
 	}
 }
