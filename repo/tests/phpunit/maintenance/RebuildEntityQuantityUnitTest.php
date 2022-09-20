@@ -131,6 +131,9 @@ class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase {
 		$argv[] = '--to-value';
 		$argv[] = $toValue;
 
+		$argv[] = '--sleep';
+		$argv[] = '0';
+
 		$this->maintenance->loadWithArgv( $argv );
 		$this->maintenance->execute();
 
