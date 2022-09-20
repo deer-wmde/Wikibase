@@ -37,11 +37,6 @@ require_once __DIR__ . '/../../../maintenance/rebuildEntityQuantityUnit.php';
 class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase {
 	use WikibaseTablesUsed;
 
-	/**
-	 * @var ItemId[]
-	 */
-	private $itemIds = [];
-
 	private $valueMatchesItemId;
 	private $valueAlreadyCorrectItemId;
 	private $valueDoesNotMatchItemId;
@@ -56,6 +51,14 @@ class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase {
 	 */
 	private $quantityUnitProperty;
 	private $user;
+	private $itemUnit;
+
+	/**
+	 * @return string
+	 */
+	protected function getMaintenanceClass() {
+		return RebuildEntityQuantityUnit::class;
+	}
 
 	/**
 	 * @param LegacyAdapterItemLookup $entityLookup
@@ -70,13 +73,6 @@ class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase {
 		$unitValue = $mainSnak->getDataValue()->getValue()->getUnit();
 
 		return $unitValue;
-	}
-
-	/**
-	 * @return string
-	 */
-	protected function getMaintenanceClass() {
-		return RebuildEntityQuantityUnit::class;
 	}
 
 	/**
@@ -114,12 +110,12 @@ class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase {
 		$this->quantityUnitProperty = new Property(null, new Fingerprint(new TermList([new Term('en', 'weight')])), 'quantity');
 		$this->store->saveEntity($this->quantityUnitProperty, 'testing', $this->user, EDIT_NEW);
 
-		$itemUnit = new Item();
-		$this->store->saveEntity($itemUnit, 'testing', $this->user, EDIT_NEW);
+		$this->itemUnit = new Item();
+		$this->store->saveEntity($this->itemUnit, 'testing', $this->user, EDIT_NEW);
 
-		$this->valueMatchesItemId = $this->createItem('http://old.wikibase/entity/'.$itemUnit->getId()->getSerialization());
-		$this->valueAlreadyCorrectItemId = $this->createItem('https://new.wikibase/entity/'.$itemUnit->getId()->getSerialization());
-		$this->valueDoesNotMatchItemId = $this->createItem('http://wrong.wikibase/entity/Q1234');
+		$this->valueMatchesItemId = $this->createItem('http://old.wikibase/entity/'. $this->itemUnit->getId()->getSerialization());
+		$this->valueAlreadyCorrectItemId = $this->createItem('https://new.wikibase/entity/'. $this->itemUnit->getId()->getSerialization());
+		$this->valueDoesNotMatchItemId = $this->createItem('http://unrelated.wikibase/entity/Q1234');
 	}
 
 	public function testExecute() {
@@ -142,11 +138,11 @@ class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase {
 		);
 
 		$this->assertEquals(
-			$toValue.'/entity/'.$this->valueMatchesItemId,
+			$toValue.'/entity/'.$this->itemUnit->getId()->getSerialization(),
 			$this->getItemUnitValue($entityLookup, $this->valueMatchesItemId));
 
 		$this->assertEquals(
-			$toValue.'/entity/'.$this->valueAlreadyCorrectItemId,
+			$toValue.'/entity/'.$this->itemUnit->getId()->getSerialization(),
 			$this->getItemUnitValue($entityLookup, $this->valueAlreadyCorrectItemId));
 
 		$this->assertEquals(
