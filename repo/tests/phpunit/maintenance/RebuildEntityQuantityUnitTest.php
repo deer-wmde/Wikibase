@@ -53,7 +53,7 @@ class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase {
 	/**
 	 * @var Item
 	 */
-	private $itemUnit;
+	private $unitItem;
 
 	/**
 	 * @var \User
@@ -114,12 +114,12 @@ class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase {
 		$this->quantityUnitProperty = new Property(null, new Fingerprint(new TermList([new Term('en', 'weight')])), 'quantity');
 		$this->store->saveEntity($this->quantityUnitProperty, 'testing', $this->user, EDIT_NEW);
 
-		$this->itemUnit = new Item();
-		$this->store->saveEntity($this->itemUnit, 'testing', $this->user, EDIT_NEW);
+		$this->unitItem = new Item();
+		$this->store->saveEntity($this->unitItem, 'testing', $this->user, EDIT_NEW);
 
 		$unitValues = [
-			'matches'		 => 'http://old.wikibase/entity/' . $this->itemUnit->getId()->getSerialization(),
-			'alreadyCorrect' => 'https://new.wikibase/entity/' . $this->itemUnit->getId()->getSerialization(),
+			'matches'		 => 'http://old.wikibase/entity/' . $this->unitItem->getId()->getSerialization(),
+			'alreadyCorrect' => 'https://new.wikibase/entity/' . $this->unitItem->getId()->getSerialization(),
 			'doesNotMatch' 	 => 'http://unrelated.wikibase/entity/Q1234',
 		];
 
@@ -151,17 +151,17 @@ class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase {
 		);
 
 		// this is most likely 'Q1' but let's look it up
-		$serializedItemUnitId = $this->itemUnit->getId()->getSerialization();
+		$serializedUnitItemId = $this->unitItem->getId()->getSerialization();
 
 		// test if value changed from 'http://old.wikibase/entity/Q1' to 'https://new.wikibase/entity/Q1'
 		$this->assertEquals(
-			$toValue.'/entity/'.$serializedItemUnitId,
+			$toValue.'/entity/'.$serializedUnitItemId,
 			$this->getItemUnitValue($entityLookup, $this->itemIds['matches'])
 		);
 
 		// test if value did NOT change from 'https://new.wikibase/entity/Q1'
 		$this->assertEquals(
-			$toValue.'/entity/'.$serializedItemUnitId,
+			$toValue.'/entity/'.$serializedUnitItemId,
 			$this->getItemUnitValue($entityLookup, $this->itemIds['alreadyCorrect'])
 		);
 
