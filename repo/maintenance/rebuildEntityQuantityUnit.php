@@ -23,10 +23,8 @@ require_once __DIR__ . '/EntityQuantityUnitRebuilder.php';
 /**
  * @license GPL-2.0-or-later
  *
- * This script attempts to rebuild the Quantity unit URI:s in statements from one hostname to another.
- *
- * You can run it using the --all parameter, this will loop through each property / item.
- * Without this parameter the script uses a rather slow SQL query to figure out which entities might need updating.
+ * This script attempts to rebuild the Quantity unit URI:s in statements from one value to another.
+ * https://phabricator.wikimedia.org/T312256
  *
  * Example:
  * php extensions/Wikibase/repo/maintenance/rebuildEntityQuantityUnit.php --from-value=example.localhost --to-value=example.com
