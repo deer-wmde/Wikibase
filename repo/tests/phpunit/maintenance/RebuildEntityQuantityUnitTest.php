@@ -3,9 +3,7 @@
 namespace Wikibase\Repo\Tests\Maintenance;
 
 use DataValues\QuantityValue;
-use DataValues\UnboundedQuantityValue;
 use MediaWiki\Tests\Maintenance\MaintenanceBaseTestCase;
-use Wikibase\DataModel\Entity\EntityDocument;
 use Wikibase\DataModel\Entity\Item;
 use Wikibase\DataModel\Entity\ItemId;
 use Wikibase\DataModel\Entity\Property;
@@ -37,6 +35,9 @@ require_once __DIR__ . '/../../../maintenance/rebuildEntityQuantityUnit.php';
 class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase {
 	use WikibaseTablesUsed;
 
+	/**
+	 * @var ItemId[]
+	 */
 	private $itemIds;
 
 	/**
@@ -48,8 +49,16 @@ class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase {
 	 * @var Property
 	 */
 	private $quantityUnitProperty;
-	private $user;
+
+	/**
+	 * @var Item
+	 */
 	private $itemUnit;
+
+	/**
+	 * @var \User
+	 */
+	private $user;
 
 	/**
 	 * @return string
@@ -60,10 +69,10 @@ class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase {
 
 	/**
 	 * @param LegacyAdapterItemLookup $entityLookup
-	 * @param $itemId
-	 * @return void
+	 * @param ItemId $itemId
+	 * @return string
 	 */
-	public function getItemUnitValue(LegacyAdapterItemLookup $entityLookup, $itemId): string
+	public function getItemUnitValue(LegacyAdapterItemLookup $entityLookup, ItemId $itemId): string
 	{
 		$item = $entityLookup->getItemForId($itemId);
 		$itemStatements = $item->getStatements()->getByPropertyId($this->quantityUnitProperty->getId());
