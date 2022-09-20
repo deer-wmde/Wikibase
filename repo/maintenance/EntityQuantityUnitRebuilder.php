@@ -40,9 +40,9 @@ class EntityQuantityUnitRebuilder {
 	/** @var int */
 	private $batchSpacingInSeconds;
 	/** @var string */
-	private $hostFrom;
+	private $valueFrom;
 	/** @var string */
-	private $hostTo;
+	private $valueTo;
 	private $entityStore;
 	private $performer;
 
@@ -61,16 +61,16 @@ class EntityQuantityUnitRebuilder {
 	 */
 	public function __construct(
 		SeekableEntityIdPager $idPager,
-		MessageReporter $progressReporter,
-		MessageReporter $errorReporter,
-		RepoDomainDb $db,
-		PropertyLookup $propertyLookup,
-		ItemLookup $itemLookup,
-		int $batchSize,
-		int $batchSpacingInSeconds,
-		string $hostFrom,
-		string $hostTo,
-		bool $all
+		MessageReporter       $progressReporter,
+		MessageReporter       $errorReporter,
+		RepoDomainDb          $db,
+		PropertyLookup        $propertyLookup,
+		ItemLookup            $itemLookup,
+		int                   $batchSize,
+		int                   $batchSpacingInSeconds,
+		string                $valueFrom,
+		string                $valueTo,
+		bool                  $all
 	) {
 		$this->idPager = $idPager;
 		$this->progressReporter = $progressReporter;
@@ -80,8 +80,8 @@ class EntityQuantityUnitRebuilder {
 		$this->itemLookup = $itemLookup;
 		$this->batchSize = $batchSize;
 		$this->batchSpacingInSeconds = $batchSpacingInSeconds;
-		$this->hostFrom = $hostFrom;
-		$this->hostTo = $hostTo;
+		$this->valueFrom = $valueFrom;
+		$this->valueTo = $valueTo;
 		$this->entityStore = WikibaseRepo::getEntityStore();
 		$this->performer = \User::newSystemUser( \User::MAINTENANCE_SCRIPT_USER, [ 'steal' => true ] );
 		$this->loopThroughAll = $all;
@@ -93,30 +93,7 @@ class EntityQuantityUnitRebuilder {
 
 		$counter = 0;
 		while ( true ) {
-
-			$entityIds = [];
-
-			if ( $this->loopThroughAll ) {
-				$entityIds = $this->idPager->fetchIds( $this->batchSize );
-			} else {
-				$result = $db->query(
-					' SELECT distinct(page_title) from ' . $db->tableName( 'page' ) . ' as p '
-					. ' inner join ' . $db->tableName( 'pagelinks' ) . ' as pl on p.page_id = pl.pl_from'
-					. ' inner join ' .$db->tableName( 'wb_property_info' ). ' as pi on pl.pl_title = CONCAT(\'P\', pi.pi_property_id)'
-					. ' where ( p.page_title like \'Q%\' OR p.page_title like \'P%\' ) and pi.pi_info = \'{"type":"quantity"}\''
-					. ' LIMIT ' . $this->batchSize . ' OFFSET ' . $counter,
-					__METHOD__
-				);
-
-				while( $result->next() ) {
-					if( str_starts_with($result->current()->page_title, "Q")) {
-						$entityIds[] = new ItemId( $result->current()->page_title );
-					} else {
-						$entityIds[] = new NumericPropertyId( $result->current()->page_title );
-					}
-				}
-			}
-
+			$entityIds = $this->idPager->fetchIds( $this->batchSize );
 			$numEntities = count($entityIds);
 
 			if ( $numEntities == 0 ) {
@@ -156,12 +133,10 @@ class EntityQuantityUnitRebuilder {
 					$this->itemLookup->getItemForId( $entityId )
 				);
 			}
-
 		}
 	}
 
 	private function updateQuantityUnit( $entity ) {
-
 		$updateCounter = 0;
 
 		/** @var StatementList $statements */
@@ -179,8 +154,8 @@ class EntityQuantityUnitRebuilder {
 
 				$unit = $value->getUnit();
 
-				if ( str_contains( $unit, $this->hostFrom) ) {
-					$newUnit = str_replace($this->hostFrom, $this->hostTo, $unit);
+				if ( str_contains( $unit, $this->valueFrom) ) {
+					$newUnit = str_replace($this->valueFrom, $this->valueTo, $unit);
 					$value = UnboundedQuantityValue::newFromNumber($value->getAmount(), $newUnit);
 					$mainSnak = new PropertyValueSnak($mainSnak->getPropertyId(), $value);
 					$updateCounter++;
@@ -188,15 +163,11 @@ class EntityQuantityUnitRebuilder {
 			}
 
 			$statement->setMainSnak($mainSnak);
-
 		}
 
 		if( $updateCounter > 0) {
 			$rev = $this->entityStore->saveEntity($entity, "Updating quantity unit", $this->performer, EDIT_UPDATE);
 			$this->progressReporter->reportMessage("Updating {$entity->getId()}: revision: {$rev->getRevisionId()} updates: {$updateCounter}");
-
-
 		}
 	}
-
 }
