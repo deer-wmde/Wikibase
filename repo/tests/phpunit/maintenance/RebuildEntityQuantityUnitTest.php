@@ -128,9 +128,9 @@ class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase
 		$this->unitItemId = $unitItem->getId()->getSerialization();
 
 		$unitValues = [
-			'matches' => 'http://old.wikibase/entity/' . $this->unitItemId,
+			'matches'        => 'http://old.wikibase/entity/' . $this->unitItemId,
 			'alreadyCorrect' => 'https://new.wikibase/entity/' . $this->unitItemId,
-			'doesNotMatch' => 'http://unrelated.wikibase/entity/Q1234',
+			'doesNotMatch'   => 'http://unrelated.wikibase/entity/Q1234',
 		];
 
 		foreach ($unitValues as $key => $unitValue) {
@@ -143,18 +143,16 @@ class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase
 		$fromValue = 'http://old.wikibase';
 		$toValue = 'https://new.wikibase';
 
-		$argv = [];
+		$this->maintenance->loadWithArgv([
+			'--from-value',
+			$fromValue,
 
-		$argv[] = '--from-value';
-		$argv[] = $fromValue;
+			'--to-value',
+			$toValue,
 
-		$argv[] = '--to-value';
-		$argv[] = $toValue;
-
-		$argv[] = '--sleep';
-		$argv[] = '0';
-
-		$this->maintenance->loadWithArgv($argv);
+			'--sleep',
+			'0',
+		]);
 		$this->maintenance->execute();
 
 		$entityLookup = new LegacyAdapterItemLookup(
