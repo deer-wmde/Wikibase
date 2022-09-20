@@ -4,6 +4,8 @@ namespace Wikibase\Repo\Tests\Maintenance;
 
 use DataValues\QuantityValue;
 use MediaWiki\Tests\Maintenance\MaintenanceBaseTestCase;
+use PermissionsError;
+use User;
 use Wikibase\DataModel\Entity\Item;
 use Wikibase\DataModel\Entity\ItemId;
 use Wikibase\DataModel\Entity\Property;
@@ -15,6 +17,7 @@ use Wikibase\DataModel\Term\Fingerprint;
 use Wikibase\DataModel\Term\TermList;
 use Wikibase\DataModel\Term\Term;
 use Wikibase\Lib\Store\EntityStore;
+use Wikibase\Lib\Store\StorageException;
 use Wikibase\Repo\Maintenance\RebuildEntityQuantityUnit;
 use Wikibase\Repo\Store\Store;
 use Wikibase\Repo\Tests\WikibaseTablesUsed;
@@ -32,7 +35,8 @@ require_once __DIR__ . '/../../../maintenance/rebuildEntityQuantityUnit.php';
  * @license GPL-2.0-or-later
  * @author Deniz Erdogan < deniz.erdogan@wikimedia.de >
  */
-class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase {
+class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase
+{
 	use WikibaseTablesUsed;
 
 	/**
@@ -51,19 +55,20 @@ class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase {
 	private $quantityUnitProperty;
 
 	/**
-	 * @var Item
+	 * @var string
 	 */
-	private $unitItem;
+	private $unitItemId;
 
 	/**
-	 * @var \User
+	 * @var User
 	 */
 	private $user;
 
 	/**
 	 * @return string
 	 */
-	protected function getMaintenanceClass() {
+	protected function getMaintenanceClass()
+	{
 		return RebuildEntityQuantityUnit::class;
 	}
 
@@ -85,26 +90,28 @@ class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase {
 	/**
 	 * @param $unitValue
 	 * @return ItemId|null
-	 * @throws \PermissionsError
-	 * @throws \Wikibase\Lib\Store\StorageException
+	 * @throws PermissionsError
+	 * @throws StorageException
 	 */
-	private function createItem($unitValue) {
+	private function createItem($unitValue)
+	{
 		$item = new Item();
 
 		$value = QuantityValue::newFromNumber(100, $unitValue);
-		$snak = new PropertyValueSnak( $this->quantityUnitProperty->getId(), $value);
+		$snak = new PropertyValueSnak($this->quantityUnitProperty->getId(), $value);
 		$item->setStatements(
 			new StatementList(
 				new Statement($snak)
 			)
 		);
 
-		$this->store->saveEntity( $item, 'testing', $this->user, EDIT_NEW );
+		$this->store->saveEntity($item, 'testing', $this->user, EDIT_NEW);
 
 		return $item->getId();
 	}
 
-	protected function setUp(): void {
+	protected function setUp(): void
+	{
 		parent::setUp();
 
 		$this->markTablesUsedForEntityEditing();
@@ -114,13 +121,16 @@ class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase {
 		$this->quantityUnitProperty = new Property(null, new Fingerprint(new TermList([new Term('en', 'weight')])), 'quantity');
 		$this->store->saveEntity($this->quantityUnitProperty, 'testing', $this->user, EDIT_NEW);
 
-		$this->unitItem = new Item();
-		$this->store->saveEntity($this->unitItem, 'testing', $this->user, EDIT_NEW);
+		$unitItem = new Item();
+		$this->store->saveEntity($unitItem, 'testing', $this->user, EDIT_NEW);
+
+		// this is most likely 'Q1' but let's look it up
+		$this->unitItemId = $unitItem->getId()->getSerialization();
 
 		$unitValues = [
-			'matches'		 => 'http://old.wikibase/entity/' . $this->unitItem->getId()->getSerialization(),
-			'alreadyCorrect' => 'https://new.wikibase/entity/' . $this->unitItem->getId()->getSerialization(),
-			'doesNotMatch' 	 => 'http://unrelated.wikibase/entity/Q1234',
+			'matches' => 'http://old.wikibase/entity/' . $this->unitItemId,
+			'alreadyCorrect' => 'https://new.wikibase/entity/' . $this->unitItemId,
+			'doesNotMatch' => 'http://unrelated.wikibase/entity/Q1234',
 		];
 
 		foreach ($unitValues as $key => $unitValue) {
@@ -128,7 +138,8 @@ class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase {
 		}
 	}
 
-	public function testExecute() {
+	public function testExecute()
+	{
 		$fromValue = 'http://old.wikibase';
 		$toValue = 'https://new.wikibase';
 
@@ -143,25 +154,22 @@ class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase {
 		$argv[] = '--sleep';
 		$argv[] = '0';
 
-		$this->maintenance->loadWithArgv( $argv );
+		$this->maintenance->loadWithArgv($argv);
 		$this->maintenance->execute();
 
 		$entityLookup = new LegacyAdapterItemLookup(
-			WikibaseRepo::getStore()->getEntityLookup( Store::LOOKUP_CACHING_DISABLED )
+			WikibaseRepo::getStore()->getEntityLookup(Store::LOOKUP_CACHING_DISABLED)
 		);
-
-		// this is most likely 'Q1' but let's look it up
-		$serializedUnitItemId = $this->unitItem->getId()->getSerialization();
 
 		// test if value changed from 'http://old.wikibase/entity/Q1' to 'https://new.wikibase/entity/Q1'
 		$this->assertEquals(
-			$toValue.'/entity/'.$serializedUnitItemId,
+			$toValue . '/entity/' . $this->unitItemId,
 			$this->getItemUnitValue($entityLookup, $this->itemIds['matches'])
 		);
 
 		// test if value did NOT change from 'https://new.wikibase/entity/Q1'
 		$this->assertEquals(
-			$toValue.'/entity/'.$serializedUnitItemId,
+			$toValue . '/entity/' . $this->unitItemId,
 			$this->getItemUnitValue($entityLookup, $this->itemIds['alreadyCorrect'])
 		);
 

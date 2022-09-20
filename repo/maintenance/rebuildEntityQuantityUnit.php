@@ -13,7 +13,7 @@ use Wikibase\Repo\Store\Sql\SqlEntityIdPagerFactory;
 use Wikibase\Repo\Store\Store;
 use Wikibase\Repo\WikibaseRepo;
 
-$basePath = getenv( 'MW_INSTALL_PATH' ) !== false ? getenv( 'MW_INSTALL_PATH' ) : __DIR__ . '/../../../../..';
+$basePath = getenv('MW_INSTALL_PATH') !== false ? getenv('MW_INSTALL_PATH') : __DIR__ . '/../../../../..';
 
 require_once $basePath . '/maintenance/Maintenance.php';
 
@@ -29,12 +29,14 @@ require_once __DIR__ . '/EntityQuantityUnitRebuilder.php';
  * Example:
  * php extensions/Wikibase/repo/maintenance/rebuildEntityQuantityUnit.php --from-value=example.localhost --to-value=example.com
  */
-class RebuildEntityQuantityUnit extends Maintenance {
+class RebuildEntityQuantityUnit extends Maintenance
+{
 
-	public function __construct() {
+	public function __construct()
+	{
 		parent::__construct();
 
-		$this->addDescription( 'Rebuilds entity quantity unit values' );
+		$this->addDescription('Rebuilds entity quantity unit values');
 
 		$this->addOption(
 			'from-value',
@@ -65,53 +67,57 @@ class RebuildEntityQuantityUnit extends Maintenance {
 		);
 	}
 
-	public function execute() {
+	public function execute()
+	{
 		$rebuilder = new EntityQuantityUnitRebuilder(
 			$this->newEntityIdPager(),
 			$this->getReporter(),
 			$this->getErrorReporter(),
 			WikibaseRepo::getRepoDomainDbFactory()->newRepoDb(),
 			new LegacyAdapterPropertyLookup(
-				WikibaseRepo::getStore()->getEntityLookup( Store::LOOKUP_CACHING_RETRIEVE_ONLY )
+				WikibaseRepo::getStore()->getEntityLookup(Store::LOOKUP_CACHING_RETRIEVE_ONLY)
 			),
 			new LegacyAdapterItemLookup(
-				WikibaseRepo::getStore()->getEntityLookup( Store::LOOKUP_CACHING_RETRIEVE_ONLY )
+				WikibaseRepo::getStore()->getEntityLookup(Store::LOOKUP_CACHING_RETRIEVE_ONLY)
 			),
-			(int)$this->getOption( 'batch-size', 250 ),
-			(int)$this->getOption( 'sleep', 10 ),
-			(string)$this->getOption( 'from-value'),
-			(string)$this->getOption( 'to-value')
+			(int)$this->getOption('batch-size', 250),
+			(int)$this->getOption('sleep', 10),
+			(string)$this->getOption('from-value'),
+			(string)$this->getOption('to-value')
 		);
 
 		$rebuilder->rebuild();
 
-		$this->output( "Done.\n" );
+		$this->output("Done.\n");
 	}
 
-	private function newEntityIdPager(): SqlEntityIdPager {
+	private function newEntityIdPager(): SqlEntityIdPager
+	{
 		$sqlEntityIdPagerFactory = new SqlEntityIdPagerFactory(
 			WikibaseRepo::getEntityNamespaceLookup(),
 			WikibaseRepo::getEntityIdLookup(),
 			WikibaseRepo::getRepoDomainDbFactory()->newRepoDb()
 		);
 
-		$pager = $sqlEntityIdPagerFactory->newSqlEntityIdPager( [ 'property', 'item' ] );
+		$pager = $sqlEntityIdPagerFactory->newSqlEntityIdPager(['property', 'item']);
 
 		return $pager;
 	}
 
-	private function getReporter(): MessageReporter {
+	private function getReporter(): MessageReporter
+	{
 		return new CallbackMessageReporter(
-			function ( $message ) {
-				$this->output( "$message\n" );
+			function ($message) {
+				$this->output("$message\n");
 			}
 		);
 	}
 
-	private function getErrorReporter(): MessageReporter {
+	private function getErrorReporter(): MessageReporter
+	{
 		return new CallbackMessageReporter(
-			function ( $message ) {
-				$this->error( "[ERROR] $message" );
+			function ($message) {
+				$this->error("[ERROR] $message");
 			}
 		);
 	}
