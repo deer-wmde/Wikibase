@@ -97,9 +97,6 @@ class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase {
 		return $item->getId();
 	}
 
-	/**
-	 * @return void
-	 */
 	protected function setUp(): void {
 		parent::setUp();
 
@@ -139,11 +136,13 @@ class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase {
 
 		$this->assertEquals(
 			$toValue.'/entity/'.$this->itemUnit->getId()->getSerialization(),
-			$this->getItemUnitValue($entityLookup, $this->valueMatchesItemId));
+			$this->getItemUnitValue($entityLookup, $this->valueMatchesItemId)
+		);
 
 		$this->assertEquals(
 			$toValue.'/entity/'.$this->itemUnit->getId()->getSerialization(),
-			$this->getItemUnitValue($entityLookup, $this->valueAlreadyCorrectItemId));
+			$this->getItemUnitValue($entityLookup, $this->valueAlreadyCorrectItemId)
+		);
 
 		$this->assertEquals(
 			'http://unrelated.wikibase/entity/Q1234',
