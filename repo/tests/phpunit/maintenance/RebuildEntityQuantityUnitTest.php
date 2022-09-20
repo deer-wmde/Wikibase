@@ -93,7 +93,7 @@ class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase
 	 * @throws PermissionsError
 	 * @throws StorageException
 	 */
-	private function createItem($unitValue)
+	private function createItemWithUnitValue($unitValue)
 	{
 		$item = new Item();
 
@@ -134,7 +134,7 @@ class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase
 		];
 
 		foreach ($unitValues as $key => $unitValue) {
-			$this->itemIds[$key] = $this->createItem($unitValue);
+			$this->itemIds[$key] = $this->createItemWithUnitValue($unitValue);
 		}
 	}
 
