@@ -79,6 +79,7 @@ class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase {
 	 */
 	private function createItems(): array {
 		$testUser = $this->getTestUser()->getUser();
+
 		$this->quantityUnitProperty = new Property(null, new Fingerprint(new TermList([new Term('en', 'weight')])), 'quantity');
 		$this->store->saveEntity($this->quantityUnitProperty, 'testing', $testUser, EDIT_NEW);
 
@@ -169,11 +170,11 @@ class RebuildEntityQuantityUnitTest extends MaintenanceBaseTestCase {
 		);
 
 		$this->assertEquals(
-			'https://new.wikibase/entity/'.$itemValueAlreadyCorrect->getId()->getSerialization(),
+			$toValue.'/entity/'.$itemValueAlreadyCorrect->getId()->getSerialization(),
 			$itemValueAlreadyCorrectUnit);
 
 		$this->assertEquals(
-			'http://wrong.wikibase/entity/Q1234',
+			'http://unrelated.wikibase/entity/Q1234',
 			$itemValueDoesNotMatchUnit
 		);
 	}
